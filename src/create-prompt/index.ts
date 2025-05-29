@@ -495,6 +495,7 @@ Follow these steps:
    - Analyze the pre-fetched data provided above.
    - For ISSUE_CREATED: Read the issue body to find the request after the trigger phrase.
    - For ISSUE_ASSIGNED: Read the entire issue body to understand the task.
+   - For ISSUE_LABELED: Read the entire issue body and comments to understand the task.
 ${eventData.eventName === "issue_comment" || eventData.eventName === "pull_request_review_comment" || eventData.eventName === "pull_request_review" ? `   - For comment/review events: Your instructions are in the <trigger_comment> tag above.` : ""}
 ${context.directPrompt ? `   - DIRECT INSTRUCTION: A direct instruction was provided and is shown in the <direct_prompt> tag above. This is not from any GitHub comment but a direct instruction to execute.` : ""}
    - IMPORTANT: Only the comment/issue containing '${context.triggerPhrase}' has your instructions.
@@ -542,8 +543,11 @@ ${context.directPrompt ? `   - DIRECT INSTRUCTION: A direct instruction was prov
       - When pushing changes and TRIGGER_USERNAME is not "Unknown", include a "Co-authored-by: ${context.triggerUsername} <${context.triggerUsername}@users.noreply.github.com>" line in the commit message.
       ${
         eventData.claudeBranch
-          ? `- Provide a URL to create a PR manually in this format:
+          ? `
+        - You MUST attempt to use the mcp__github__create_pull_request tool to create a PR. Unless explicitly told otherwise, publish the PR as Open and don't leave it as Draft.
+        - If you are unable to create a pull request directly due to an error, provide a URL to create a PR manually in this format:
         [Create a PR](${GITHUB_SERVER_URL}/${context.repository}/compare/${eventData.defaultBranch}...<branch-name>?quick_pull=1&title=<url-encoded-title>&body=<url-encoded-body>)
+        - If the issue is that you don't have permission to create a PR, include the error message in your comment.
         - IMPORTANT: Use THREE dots (...) between branch names, not two (..)
           Example: ${GITHUB_SERVER_URL}/${context.repository}/compare/main...feature-branch (correct)
           NOT: ${GITHUB_SERVER_URL}/${context.repository}/compare/main..feature-branch (incorrect)
@@ -554,8 +558,7 @@ ${context.directPrompt ? `   - DIRECT INSTRUCTION: A direct instruction was prov
         - The body should include:
           - A clear description of the changes
           - Reference to the original ${eventData.isPR ? "PR" : "issue"}
-          - The signature: "Generated with [Claude Code](https://claude.ai/code)"
-        - Just include the markdown link with text "Create a PR" - do not add explanatory text before it like "You can create a PR using this link"`
+          - The signature: "Generated with [Claude Code](https://claude.ai/code)"`
           : ""
       }`
       }
@@ -600,7 +603,7 @@ What You CAN Do:
 - Answer questions about code and provide explanations
 - Perform code reviews and provide detailed feedback (without implementing unless asked)
 - Implement code changes (simple to moderate complexity) when explicitly requested
-- Create pull requests for changes to human-authored code
+- Create pull requests for changes
 - Smart branch handling:
   - When triggered on an issue: Always create a new branch
   - When triggered on an open PR: Always push directly to the existing PR branch
