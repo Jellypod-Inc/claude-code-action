@@ -194,9 +194,6 @@ describe("generatePrompt", () => {
     expect(prompt).toContain(
       "<trigger_context>new issue with '@claude' in body</trigger_context>",
     );
-    expect(prompt).toContain(
-      "[Create a PR](https://github.com/owner/repo/compare/main",
-    );
     expect(prompt).toContain("The target-branch should be 'main'");
   });
 
@@ -221,9 +218,6 @@ describe("generatePrompt", () => {
     expect(prompt).toContain("<event_type>ISSUE_ASSIGNED</event_type>");
     expect(prompt).toContain(
       "<trigger_context>issue assigned to 'claude-bot'</trigger_context>",
-    );
-    expect(prompt).toContain(
-      "[Create a PR](https://github.com/owner/repo/compare/develop",
     );
   });
 
@@ -349,7 +343,6 @@ describe("generatePrompt", () => {
     expect(prompt).not.toContain(
       "IMPORTANT: You are already on the correct branch (",
     );
-    expect(prompt).not.toContain("Create a PR](https://github.com/");
   });
 
   test("should include Issue-specific instructions only for Issue events", () => {
@@ -376,7 +369,6 @@ describe("generatePrompt", () => {
     expect(prompt).toContain(
       "IMPORTANT: You are already on the correct branch (claude/issue-789-20240101_120000)",
     );
-    expect(prompt).toContain("Create a PR](https://github.com/");
     expect(prompt).toContain(
       "If you created anything in your branch, your comment must include the PR URL",
     );
@@ -443,9 +435,6 @@ describe("generatePrompt", () => {
       "You are already on the correct branch (claude/pr-456-20240101_120000)",
     );
     expect(prompt).toContain(
-      "Create a PR](https://github.com/owner/repo/compare/main",
-    );
-    expect(prompt).toContain(
       "The branch-name is the current branch: claude/pr-456-20240101_120000",
     );
     expect(prompt).toContain("Reference to the original PR");
@@ -485,7 +474,6 @@ describe("generatePrompt", () => {
     );
 
     // Should NOT contain new branch instructions
-    expect(prompt).not.toContain("Create a PR](https://github.com/");
     expect(prompt).not.toContain("You are already on the correct branch");
     expect(prompt).not.toContain(
       "If you created anything in your branch, your comment must include the PR URL",
@@ -513,9 +501,6 @@ describe("generatePrompt", () => {
     expect(prompt).toContain(
       "You are already on the correct branch (claude/pr-789-20240101_123000)",
     );
-    expect(prompt).toContain(
-      "Create a PR](https://github.com/owner/repo/compare/develop",
-    );
     expect(prompt).toContain("Reference to the original PR");
   });
 
@@ -541,7 +526,6 @@ describe("generatePrompt", () => {
     expect(prompt).toContain(
       "You are already on the correct branch (claude/pr-999-20240101_140000)",
     );
-    expect(prompt).toContain("Create a PR](https://github.com/");
     expect(prompt).toContain("Reference to the original PR");
     expect(prompt).toContain(
       "If you created anything in your branch, your comment must include the PR URL",
@@ -569,7 +553,6 @@ describe("generatePrompt", () => {
     expect(prompt).toContain(
       "You are already on the correct branch (claude/pr-555-20240101_150000)",
     );
-    expect(prompt).toContain("Create a PR](https://github.com/");
     expect(prompt).toContain("Reference to the original PR");
   });
 });

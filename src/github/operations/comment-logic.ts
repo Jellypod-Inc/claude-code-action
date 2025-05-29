@@ -12,7 +12,6 @@ export type CommentUpdateInput = {
   executionDetails: ExecutionDetails | null;
   jobUrl: string;
   branchLink?: string;
-  prLink?: string;
   branchName?: string;
   triggerUsername?: string;
 };
@@ -71,7 +70,6 @@ export function updateCommentBody(input: CommentUpdateInput): string {
     executionDetails,
     jobUrl,
     branchLink,
-    prLink,
     actionFailed,
     branchName,
     triggerUsername,
@@ -81,22 +79,6 @@ export function updateCommentBody(input: CommentUpdateInput): string {
   // First, remove the "Claude Code is working…" or "Claude Code is working..." message
   const workingPattern = /Claude Code is working[…\.]{1,3}(?:\s*<img[^>]*>)?/i;
   let bodyContent = originalBody.replace(workingPattern, "").trim();
-
-  // Check if there's a PR link in the content
-  let prLinkFromContent = "";
-
-  // Match the entire markdown link structure
-  const prLinkPattern = /\[Create .* PR\]\((.*)\)$/m;
-  const prLinkMatch = bodyContent.match(prLinkPattern);
-
-  if (prLinkMatch && prLinkMatch[1]) {
-    const encodedUrl = ensureProperlyEncodedUrl(prLinkMatch[1]);
-    if (encodedUrl) {
-      prLinkFromContent = encodedUrl;
-      // Remove the PR link from the content
-      bodyContent = bodyContent.replace(prLinkMatch[0], "").trim();
-    }
-  }
 
   // Calculate duration string if available
   let durationStr = "";
@@ -167,13 +149,6 @@ export function updateCommentBody(input: CommentUpdateInput): string {
     } else if (finalBranchName) {
       links += ` • \`${finalBranchName}\``;
     }
-  }
-
-  // Add PR link (either from content or provided)
-  const prUrl =
-    prLinkFromContent || (prLink ? prLink.match(/\(([^)]+)\)/)?.[1] : "");
-  if (prUrl) {
-    links += ` • [Create PR ➔](${prUrl})`;
   }
 
   // Build the new body with blank line between header and separator

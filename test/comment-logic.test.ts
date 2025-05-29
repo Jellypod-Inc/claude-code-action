@@ -119,118 +119,6 @@ describe("updateCommentBody", () => {
     });
   });
 
-  describe("PR link", () => {
-    it("adds PR link to header when provided", () => {
-      const input = {
-        ...baseInput,
-        prLink: "\n[Create a PR](https://github.com/owner/repo/pr-url)",
-      };
-
-      const result = updateCommentBody(input);
-      expect(result).toContain(
-        "• [Create PR ➔](https://github.com/owner/repo/pr-url)",
-      );
-    });
-
-    it("moves PR link from body to header", () => {
-      const input = {
-        ...baseInput,
-        currentBody:
-          "Some comment with [Create a PR](https://github.com/owner/repo/pr-url)",
-      };
-
-      const result = updateCommentBody(input);
-      expect(result).toContain(
-        "• [Create PR ➔](https://github.com/owner/repo/pr-url)",
-      );
-      // Original Create a PR link is removed from body
-      expect(result).not.toContain("[Create a PR]");
-    });
-
-    it("handles both body and provided PR links", () => {
-      const input = {
-        ...baseInput,
-        currentBody:
-          "Some comment with [Create a PR](https://github.com/owner/repo/pr-url-from-body)",
-        prLink:
-          "\n[Create a PR](https://github.com/owner/repo/pr-url-provided)",
-      };
-
-      const result = updateCommentBody(input);
-      // Prefers the link found in content over the provided one
-      expect(result).toContain(
-        "• [Create PR ➔](https://github.com/owner/repo/pr-url-from-body)",
-      );
-    });
-
-    it("handles complex PR URLs with encoded characters", () => {
-      const complexUrl =
-        "https://github.com/owner/repo/compare/main...feature-branch?quick_pull=1&title=fix%3A%20important%20bug%20fix&body=Fixes%20%23123%0A%0A%23%23%20Description%0AThis%20PR%20fixes%20an%20important%20bug%20that%20was%20causing%20issues%20with%20the%20application.%0A%0AGenerated%20with%20%5BClaude%20Code%5D(https%3A%2F%2Fclaude.ai%2Fcode)";
-      const input = {
-        ...baseInput,
-        currentBody: `Some comment with [Create a PR](${complexUrl})`,
-      };
-
-      const result = updateCommentBody(input);
-      expect(result).toContain(`• [Create PR ➔](${complexUrl})`);
-      // Original link should be removed from body
-      expect(result).not.toContain("[Create a PR]");
-    });
-
-    it("handles PR links with encoded URLs containing parentheses", () => {
-      const complexUrl =
-        "https://github.com/owner/repo/compare/main...feature-branch?quick_pull=1&title=fix%3A%20bug%20fix&body=Generated%20with%20%5BClaude%20Code%5D(https%3A%2F%2Fclaude.ai%2Fcode)";
-      const input = {
-        ...baseInput,
-        currentBody: `This PR was created.\n\n[Create a PR](${complexUrl})`,
-      };
-
-      const result = updateCommentBody(input);
-      expect(result).toContain(`• [Create PR ➔](${complexUrl})`);
-      // Original link should be removed from body completely
-      expect(result).not.toContain("[Create a PR]");
-      // Body content shouldn't have stray closing parens
-      expect(result).toContain("This PR was created.");
-      // Body part should be clean with no stray parens
-      const bodyAfterSeparator = result.split("---")[1]?.trim();
-      expect(bodyAfterSeparator).toBe("This PR was created.");
-    });
-
-    it("handles PR links with unencoded spaces and special characters", () => {
-      const unEncodedUrl =
-        "https://github.com/owner/repo/compare/main...feature-branch?quick_pull=1&title=fix: update welcome message&body=Generated with [Claude Code](https://claude.ai/code)";
-      const expectedEncodedUrl =
-        "https://github.com/owner/repo/compare/main...feature-branch?quick_pull=1&title=fix%3A+update+welcome+message&body=Generated+with+%5BClaude+Code%5D%28https%3A%2F%2Fclaude.ai%2Fcode%29";
-      const input = {
-        ...baseInput,
-        currentBody: `This PR was created.\n\n[Create a PR](${unEncodedUrl})`,
-      };
-
-      const result = updateCommentBody(input);
-      expect(result).toContain(`• [Create PR ➔](${expectedEncodedUrl})`);
-      // Original link should be removed from body completely
-      expect(result).not.toContain("[Create a PR]");
-      // Body content should be preserved
-      expect(result).toContain("This PR was created.");
-    });
-
-    it("falls back to prLink parameter when PR link in content cannot be encoded", () => {
-      const invalidUrl = "not-a-valid-url-at-all";
-      const fallbackPrUrl = "https://github.com/owner/repo/pull/123";
-      const input = {
-        ...baseInput,
-        currentBody: `This PR was created.\n\n[Create a PR](${invalidUrl})`,
-        prLink: `\n[Create a PR](${fallbackPrUrl})`,
-      };
-
-      const result = updateCommentBody(input);
-      expect(result).toContain(`• [Create PR ➔](${fallbackPrUrl})`);
-      // Original link with invalid URL should still be in body since encoding failed
-      expect(result).toContain("[Create a PR](not-a-valid-url-at-all)");
-      expect(result).toContain("This PR was created.");
-    });
-  });
-
   describe("execution details", () => {
     it("includes duration in header for success", () => {
       const input = {
@@ -298,7 +186,6 @@ describe("updateCommentBody", () => {
           "Claude Code is working…\n\n### Todo List:\n- [x] Read README.md\n- [x] Add disclaimer",
         actionFailed: false,
         branchName: "claude-branch-123",
-        prLink: "\n[Create a PR](https://github.com/owner/repo/pr-url)",
         executionDetails: {
           cost_usd: 0.01,
           duration_ms: 65000, // 1 minute 5 seconds
@@ -316,7 +203,6 @@ describe("updateCommentBody", () => {
       expect(result).toContain(
         "• [`claude-branch-123`](https://github.com/owner/repo/tree/claude-branch-123)",
       );
-      expect(result).toContain("• [Create PR ➔]");
 
       // Check order - header comes before separator with blank line
       const headerIndex = result.indexOf("**Claude finished");
@@ -333,70 +219,6 @@ describe("updateCommentBody", () => {
       expect(result).toContain("### Todo List:");
       expect(result).toContain("- [x] Read README.md");
       expect(result).toContain("- [x] Add disclaimer");
-    });
-
-    it("handles PR link extraction from content", () => {
-      const input = {
-        ...baseInput,
-        currentBody:
-          "Claude Code is working…\n\nI've made changes.\n[Create a PR](https://github.com/owner/repo/pr-url-in-content)\n\n@john-doe",
-        branchName: "feature-branch",
-        triggerUsername: "john-doe",
-      };
-
-      const result = updateCommentBody(input);
-
-      // PR link should be moved to header
-      expect(result).toContain(
-        "• [Create PR ➔](https://github.com/owner/repo/pr-url-in-content)",
-      );
-      // Original link should be removed from body
-      expect(result).not.toContain("[Create a PR]");
-      // Username should come from argument, not extraction
-      expect(result).toContain("**Claude finished @john-doe's task**");
-      // Content should be preserved
-      expect(result).toContain("I've made changes.");
-    });
-
-    it("includes PR link for new branches (issues and closed PRs)", () => {
-      const input = {
-        ...baseInput,
-        currentBody: "Claude Code is working… <img src='spinner.gif' />",
-        branchName: "claude/pr-456-20240101_120000",
-        prLink:
-          "\n[Create a PR](https://github.com/owner/repo/compare/main...claude/pr-456-20240101_120000)",
-        triggerUsername: "jane-doe",
-      };
-
-      const result = updateCommentBody(input);
-
-      // Should include the PR link in the formatted style
-      expect(result).toContain(
-        "• [Create PR ➔](https://github.com/owner/repo/compare/main...claude/pr-456-20240101_120000)",
-      );
-      expect(result).toContain("**Claude finished @jane-doe's task**");
-    });
-
-    it("includes both branch link and PR link for new branches", () => {
-      const input = {
-        ...baseInput,
-        currentBody: "Claude Code is working…",
-        branchName: "claude/issue-123-20240101_120000",
-        branchLink:
-          "\n[View branch](https://github.com/owner/repo/tree/claude/issue-123-20240101_120000)",
-        prLink:
-          "\n[Create a PR](https://github.com/owner/repo/compare/main...claude/issue-123-20240101_120000)",
-      };
-
-      const result = updateCommentBody(input);
-
-      // Should include both links in formatted style
-      expect(result).toContain(
-        "• [`claude/issue-123-20240101_120000`](https://github.com/owner/repo/tree/claude/issue-123-20240101_120000)",
-      );
-      expect(result).toContain(
-        "• [Create PR ➔](https://github.com/owner/repo/compare/main...claude/issue-123-20240101_120000)",
-      );
     });
   });
 });

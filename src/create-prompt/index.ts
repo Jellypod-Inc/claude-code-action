@@ -463,7 +463,7 @@ Tool usage example for mcp__github__update_pull_request_comment:
 }
 All four parameters (owner, repo, commentId, body) are required.
 </comment_tool_info>`
-      : `<comment_tool_info>
+    : `<comment_tool_info>
 IMPORTANT: You have access to various tools for file operations, code analysis, and GitHub operations. For updating your GitHub comment, use the mcp__github__update_issue_comment tool. To create a new PR, use the mcp__github__create_pull_request tool.
 
 Tool usage example for mcp__github__update_issue_comment:
@@ -545,9 +545,7 @@ ${context.directPrompt ? `   - DIRECT INSTRUCTION: A direct instruction was prov
         eventData.claudeBranch
           ? `
         - You MUST attempt to use the mcp__github__create_pull_request tool to create a PR. Unless explicitly told otherwise, publish the PR as Open and don't leave it as Draft.
-        - If you are unable to create a pull request directly due to an error, provide a URL to create a PR manually in this format:
-        [Create a PR](${GITHUB_SERVER_URL}/${context.repository}/compare/${eventData.defaultBranch}...<branch-name>?quick_pull=1&title=<url-encoded-title>&body=<url-encoded-body>)
-        - If the issue is that you don't have permission to create a PR, include the error message in your comment.
+        - If you are unable to create a pull request directly due to an error, include the error message in your comment.
         - IMPORTANT: Use THREE dots (...) between branch names, not two (..)
           Example: ${GITHUB_SERVER_URL}/${context.repository}/compare/main...feature-branch (correct)
           NOT: ${GITHUB_SERVER_URL}/${context.repository}/compare/main..feature-branch (incorrect)

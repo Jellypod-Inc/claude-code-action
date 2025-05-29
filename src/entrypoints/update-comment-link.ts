@@ -95,49 +95,6 @@ async function run() {
       defaultBranch,
     );
 
-    // Check if we need to add PR URL when we have a new branch
-    let prLink = "";
-    // If claudeBranch is set, it means we created a new branch (for issues or closed/merged PRs)
-    if (claudeBranch && !shouldDeleteBranch) {
-      // Check if comment already contains a PR URL
-      const serverUrlPattern = serverUrl.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-      const prUrlPattern = new RegExp(
-        `${serverUrlPattern}\\/.+\\/compare\\/${defaultBranch.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\.\\.\\.`,
-      );
-      const containsPRUrl = currentBody.match(prUrlPattern);
-
-      if (!containsPRUrl) {
-        // Check if there are changes to the branch compared to the default branch
-        try {
-          const { data: comparison } =
-            await octokit.rest.repos.compareCommitsWithBasehead({
-              owner,
-              repo,
-              basehead: `${defaultBranch}...${claudeBranch}`,
-            });
-
-          // If there are changes (commits or file changes), add the PR URL
-          if (
-            comparison.total_commits > 0 ||
-            (comparison.files && comparison.files.length > 0)
-          ) {
-            const entityType = context.isPR ? "PR" : "Issue";
-            const prTitle = encodeURIComponent(
-              `${entityType} #${context.entityNumber}: Changes from Claude`,
-            );
-            const prBody = encodeURIComponent(
-              `This PR addresses ${entityType.toLowerCase()} #${context.entityNumber}\n\nGenerated with [Claude Code](https://claude.ai/code)`,
-            );
-            const prUrl = `${serverUrl}/${owner}/${repo}/compare/${defaultBranch}...${claudeBranch}?quick_pull=1&title=${prTitle}&body=${prBody}`;
-            prLink = `\n[Create a PR](${prUrl})`;
-          }
-        } catch (error) {
-          console.error("Error checking for changes in branch:", error);
-          // Don't fail the entire update if we can't check for changes
-        }
-      }
-    }
-
     // Check if action failed and read output file for execution details
     let executionDetails: {
       cost_usd?: number;
@@ -186,7 +143,6 @@ async function run() {
       executionDetails,
       jobUrl,
       branchLink,
-      prLink,
       branchName: shouldDeleteBranch ? undefined : claudeBranch,
       triggerUsername,
     };
